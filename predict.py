@@ -19,7 +19,7 @@ from starvector.data.util import process_and_rasterize_svg
 
 class Output(BaseModel):
     svg: str
-
+    img: Image.Image
 
 class Predictor(BasePredictor):
     def setup(self):
@@ -37,4 +37,4 @@ class Predictor(BasePredictor):
         batch = {"image": image}
         raw_svg = self.model.generate_im2svg(batch, max_length=1000)[0]
         svg, raster_image = process_and_rasterize_svg(raw_svg)
-        return Output(svg=svg)
+        return Output(svg=svg, img=raster_image)
