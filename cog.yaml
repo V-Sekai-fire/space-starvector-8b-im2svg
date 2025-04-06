@@ -6,8 +6,8 @@ build:
         - libglib2.0-0
     python_version: '3.11'
     python_packages:
-        - pillow
         - packaging
+        - pillow
         - torch
         - git+https://github.com/joanrod/star-vector@de98330a1f3e39b7eac8397d4302e75318c807d6
 
