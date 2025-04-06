@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from cog import BaseModel, BasePredictor
+from cog import BaseModel, BasePredictor, Path
 from PIL import Image
 from starvector.model.starvector_arch import StarVectorForCausalLM
 from starvector.data.util import process_and_rasterize_svg
+import tempfile
 
 class Output(BaseModel):
     svg: str
-    img: Image.Image
+    img: Path
 
 class Predictor(BasePredictor):
     def setup(self):
@@ -35,6 +36,10 @@ class Predictor(BasePredictor):
         image_pil = Image.open(image_path)
         image = self.model.process_images([image_pil])[0].cuda()
         batch = {"image": image}
-        raw_svg = self.model.generate_im2svg(batch, max_length=1000)[0]
+        raw_svg = self.model.generate_im2svg(batch, max_length=4000)[0]
         svg, raster_image = process_and_rasterize_svg(raw_svg)
-        return Output(svg=svg, img=raster_image)
+
+        temp_file = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+        raster_image.save(temp_file.name)
+
+        return Output(svg=svg, img=Path(temp_file.name))  # Return path to the image

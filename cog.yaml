@@ -4,9 +4,14 @@ build:
     system_packages:
         - libgl1-mesa-glx
         - libglib2.0-0
-        - python3-pil
+        - python3-packaging
     python_version: '3.11'
     python_packages:
         - torch
+        - pillow
+    run:
+        - pip install --upgrade pip
+        - pip install packaging
+        - pip install git+https://github.com/joanrod/star-vector@de98330a1f3e39b7eac8397d4302e75318c807d6
 
 predict: predict.py:Predictor
