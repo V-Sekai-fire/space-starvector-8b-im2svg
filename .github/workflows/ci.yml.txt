@@ -1,0 +1,37 @@
+---
+name: CI
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v3
+            - name: Setup Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: '3.9'
+            - name: Set up Docker
+              uses: docker/setup-docker-action@v4
+            - name: Setup Cog
+              uses: replicate/setup-cog@v2
+              with:
+                  token: ${{ secrets.REPLICATE_CLI_AUTH_TOKEN }}
+            - name: Run tests (Cog) with video integration
+              run: |
+                  media_path="@thirdparty/20250401-0707-12.7226723.mp4"
+                  cog predict -i test_mode=True -i export_train=True -i "media_path=$media_path"
+            - name: Run tests (Cog) with image integration
+              run: |
+                  media_path="@thirdparty/image.jpg"
+                  cog predict -i export_train=True -i "media_path=$media_path"
+            - name: Push to Replicate
+              if: github.ref == 'refs/heads/main'
+              run: |
+                  cog push r8.im/fire/starvector-8b-im2svg
