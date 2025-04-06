@@ -14,9 +14,10 @@
 
 from cog import BaseModel, BasePredictor, Path, Input
 from PIL import Image
-from starvector.model.starvector_arch import StarVectorForCausalLM
 from starvector.data.util import process_and_rasterize_svg
 import tempfile
+from transformers import AutoModelForCausalLM, AutoProcessor
+import torch
 
 class Output(BaseModel):
     svg: str
@@ -25,7 +26,10 @@ class Output(BaseModel):
 class Predictor(BasePredictor):
     def setup(self):
         model_name = "starvector/starvector-8b-im2svg"
-        self.model = StarVectorForCausalLM.from_pretrained(model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, trust_remote_code=True)
+        self.processor = self.model.model.processor
+        self.tokenizer = self.model.model.svg_transformer.tokenizer
+
         self.model.cuda()
         self.model.eval()
 
@@ -34,12 +38,15 @@ class Predictor(BasePredictor):
         image_path: Path = Input(description="Path to the input image"),
     ) -> Output:
         image_pil = Image.open(image_path)
-        image = self.model.process_images([image_pil])[0].cuda()
+        image = self.processor(image_pil, return_tensors="pt")["pixel_values"].cuda()
+        if not image.shape[0] == 1:
+            image = image.squeeze(0)
         batch = {"image": image}
+
         raw_svg = self.model.generate_im2svg(batch, max_length=4000)[0]
         svg, raster_image = process_and_rasterize_svg(raw_svg)
 
         temp_file = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
         raster_image.save(temp_file.name)
 
-        return Output(svg=svg, img=Path(temp_file.name))  # Return path to the image
+        return Output(svg=svg, img=Path(temp_file.name))
