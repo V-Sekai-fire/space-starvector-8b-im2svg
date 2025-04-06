@@ -14,14 +14,11 @@
 
 from cog import BaseModel, BasePredictor, Path, Input
 from PIL import Image
-from starvector.data.util import process_and_rasterize_svg
-import tempfile
-from transformers import AutoModelForCausalLM, AutoProcessor
+from transformers import AutoModelForCausalLM
 import torch
 
 class Output(BaseModel):
     svg: str
-    img: Path
 
 class Predictor(BasePredictor):
     def setup(self):
@@ -44,9 +41,4 @@ class Predictor(BasePredictor):
         batch = {"image": image}
 
         raw_svg = self.model.generate_im2svg(batch, max_length=4000)[0]
-        svg, raster_image = process_and_rasterize_svg(raw_svg)
-
-        temp_file = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-        raster_image.save(temp_file.name)
-
-        return Output(svg=svg, img=Path(temp_file.name))
+        return Output(svg=raw_svg)
