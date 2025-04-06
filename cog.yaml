@@ -9,6 +9,7 @@ build:
     python_packages:
         - torch
         - pillow
+        - deepseek
     run:
         - pip install --upgrade pip
         - pip install packaging

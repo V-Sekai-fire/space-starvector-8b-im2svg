@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from cog import BaseModel, BasePredictor, Path
+from cog import BaseModel, BasePredictor, Path, Input
 from PIL import Image
 from starvector.model.starvector_arch import StarVectorForCausalLM
 from starvector.data.util import process_and_rasterize_svg
@@ -31,7 +31,7 @@ class Predictor(BasePredictor):
 
     def predict(
         self,
-        image_path: str,
+        image_path: Path = Input(description="Path to the input image"),
     ) -> Output:
         image_pil = Image.open(image_path)
         image = self.model.process_images([image_pil])[0].cuda()
